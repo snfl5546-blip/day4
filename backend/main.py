@@ -14,6 +14,7 @@ main.py — 제주 미세먼지 백엔드 (FastAPI)
 import asyncio
 import logging
 import os
+import time
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
@@ -118,6 +119,31 @@ def _latest_rows():
             seen.add(r["station"])
             latest.append(r)
     return latest
+
+
+_korea_cache = {"at": 0.0, "data": None}
+
+
+@app.get("/air/korea")
+def air_korea():
+    """전국 측정소 실시간 값 (에어코리아 → 가공 → 10분 캐시). DB 에 저장하지 않는다."""
+    if not DATA_KEY:
+        raise HTTPException(503, "DATA_GO_KR_KEY 가 없어 전국 실측값을 가져올 수 없습니다")
+    if _korea_cache["data"] is None or time.time() - _korea_cache["at"] > 600:
+        try:
+            rows = collect.fetch_korea(DATA_KEY)
+        except Exception as e:
+            if _korea_cache["data"] is None:
+                raise HTTPException(502, str(e))
+            rows = None                      # 실패하면 마지막 성공 값을 계속 보여 준다
+        if rows is not None:
+            _korea_cache["data"] = {
+                "updated": datetime.now(timezone.utc).isoformat(),
+                "summary": collect.summarize_korea(rows),
+                "stations": rows,
+            }
+            _korea_cache["at"] = time.time()
+    return _korea_cache["data"]
 
 
 @app.get("/air/latest")

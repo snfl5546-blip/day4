@@ -166,3 +166,72 @@ def clean(items: list[dict], sido: str, source: str):
         })
     stats["cleaned"] = len(rows)
     return rows, stats
+
+
+# ─────────────────────────────────────────────
+# 전국 실시간 (DB 저장 없이 그대로 보여 주는 용도)
+# ─────────────────────────────────────────────
+def _val(v, flag):
+    """'23' → 23, '-'·빈칸·장비이상(flag)·말이 안 되는 값 → None"""
+    if flag:
+        return None
+    try:
+        n = float(v)
+    except (TypeError, ValueError):
+        return None
+    return int(round(n)) if 0 <= n <= 1000 else None
+
+
+def fetch_korea(service_key: str) -> list[dict]:
+    """에어코리아 '전국' 실시간 측정값을 측정소별 깔끔한 행으로 (한 번에 최대 1000개, 넘으면 페이지 반복)."""
+    rows, page = [], 1
+    while True:
+        params = {
+            "serviceKey": unquote(service_key), "returnType": "json", "numOfRows": "1000",
+            "pageNo": str(page), "sidoName": "전국", "ver": "1.0",
+        }
+        r = httpx.get(API_URL, params=params, timeout=40)
+        r.raise_for_status()
+        if not r.text.strip().startswith("{"):
+            raise RuntimeError("공공데이터 API 오류(키 확인): " + r.text.strip()[:200])
+        body = r.json()["response"]
+        if body["header"].get("resultCode") != "00":
+            raise RuntimeError("공공데이터 API 오류: " + str(body["header"]))
+        items = body["body"].get("items") or []
+        for it in items:
+            pm10 = _val(it.get("pm10Value"), it.get("pm10Flag"))
+            pm25 = _val(it.get("pm25Value"), it.get("pm25Flag"))
+            if pm10 is None and pm25 is None:
+                continue
+            rows.append({
+                "sido": it.get("sidoName"), "station": it.get("stationName"),
+                "time": (parse_time(it.get("dataTime")) or "")[:16].replace("T", " "),
+                "pm10": pm10, "pm10_grade": grade_pm10(pm10),
+                "pm25": pm25, "pm25_grade": grade_pm25(pm25),
+            })
+        total = int(body["body"].get("totalCount") or 0)
+        if page * 1000 >= total or not items:
+            return rows
+        page += 1
+
+
+def summarize_korea(rows: list[dict]) -> dict:
+    """전국 평균 + 시도별 평균 (지도 마커용)"""
+    def avg(vals):
+        vals = [v for v in vals if v is not None]
+        return round(sum(vals) / len(vals)) if vals else None
+
+    by_sido: dict[str, list[dict]] = {}
+    for r in rows:
+        by_sido.setdefault(r["sido"], []).append(r)
+    sido = []
+    for name, rs in by_sido.items():
+        a10, a25 = avg(r["pm10"] for r in rs), avg(r["pm25"] for r in rs)
+        sido.append({"sido": name, "stations": len(rs), "avg_pm10": a10, "avg_pm25": a25,
+                     "pm10_grade": grade_pm10(a10), "pm25_grade": grade_pm25(a25)})
+    a10, a25 = avg(r["pm10"] for r in rows), avg(r["pm25"] for r in rows)
+    worst = max((r for r in rows if r["pm10"] is not None), key=lambda r: r["pm10"], default=None)
+    return {"stations": len(rows), "avg_pm10": a10, "avg_pm25": a25,
+            "pm10_grade": grade_pm10(a10), "pm25_grade": grade_pm25(a25),
+            "worst": worst and {"sido": worst["sido"], "station": worst["station"], "pm10": worst["pm10"]},
+            "sido": sorted(sido, key=lambda s: s["avg_pm10"] or 0, reverse=True)}

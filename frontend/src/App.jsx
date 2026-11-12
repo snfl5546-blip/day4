@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import KoreaWeather from "./KoreaWeather";
 import Weather from "./Weather";
-import AirDemo from "./AirDemo";
+import AirKorea from "./AirKorea";
 
 const PAGES = [
   {
@@ -20,10 +20,10 @@ const PAGES = [
   },
   {
     id: "air",
-    label: "😷 제주 미세먼지",
-    title: "제주 미세먼지 현황",
-    desc: "공공데이터를 FastAPI로 가공해 Supabase에 쌓은 측정소별 PM10·PM2.5 입니다.",
-    Component: AirDemo,
+    label: "😷 전국 미세먼지",
+    title: "전국 미세먼지 현황",
+    desc: "에어코리아 실측값을 FastAPI로 가공해 시도별 평균과 측정소별 PM10·PM2.5를 보여 드려요.",
+    Component: AirKorea,
   },
 ];
 
