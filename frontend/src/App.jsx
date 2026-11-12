@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import KoreaWeather from "./KoreaWeather";
 import Weather from "./Weather";
 import AirKorea from "./AirKorea";
+import Agent from "./Agent";
 
 const PAGES = [
   {
@@ -24,6 +25,13 @@ const PAGES = [
     title: "전국 미세먼지 현황",
     desc: "에어코리아 실측값을 FastAPI로 가공해 시도별 평균과 측정소별 PM10·PM2.5를 보여 드려요.",
     Component: AirKorea,
+  },
+  {
+    id: "agent",
+    label: "🤖 추천 에이전트",
+    title: "날씨 기반 장소 추천 에이전트",
+    desc: "Gemini가 질문을 보고 날씨 조회와 장소 검색 도구 중 필요한 것을 골라 호출해 추천해 드려요.",
+    Component: Agent,
   },
 ];
 

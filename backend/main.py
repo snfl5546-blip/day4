@@ -22,9 +22,13 @@ from datetime import datetime, timezone
 from dotenv import load_dotenv
 load_dotenv()
 
+from typing import Literal
+
 from fastapi import FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
 
+import agent
 import collect
 import db
 import predict
@@ -119,6 +123,28 @@ def _latest_rows():
             seen.add(r["station"])
             latest.append(r)
     return latest
+
+
+class ChatTurn(BaseModel):
+    role: Literal["user", "assistant"]
+    text: str = Field(max_length=2000)
+
+
+class ChatIn(BaseModel):
+    message: str = Field(min_length=1, max_length=500)
+    history: list[ChatTurn] = Field(default_factory=list, max_length=12)
+
+
+@app.post("/agent/chat")
+def agent_chat(body: ChatIn):
+    """질문 → Gemini 가 도구(get_weather / find_spots)를 골라 호출 → 추천 답변. 어떤 도구를 불렀는지도 함께 돌려준다."""
+    if not os.getenv("GEMINI_API_KEY", "").strip():
+        raise HTTPException(503, "GEMINI_API_KEY 가 설정되지 않았습니다 (backend/.env 에 추가하세요)")
+    try:
+        return agent.run_agent(body.message, [t.model_dump() for t in body.history])
+    except Exception as e:
+        log.exception("agent 실패")
+        raise HTTPException(502, str(e)[:300])
 
 
 _korea_cache = {"at": 0.0, "data": None}

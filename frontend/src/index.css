@@ -142,3 +142,21 @@ tbody tr:hover { background: rgba(255, 255, 255, 0.05); }
   .wx .temp { font-size: 42px; }
   .title-line { font-size: 22px; }
 }
+
+/* ---------- 에이전트 채팅 ---------- */
+.chat-log { min-height: 300px; max-height: 560px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding: 2px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips .tab { text-align: left; border-radius: 14px; }
+.bubble { max-width: 92%; padding: 12px 16px; border-radius: 18px; font-size: 15px; line-height: 1.65; word-break: keep-all; overflow-wrap: anywhere; }
+.bubble.user { align-self: flex-end; background: rgba(182, 156, 255, 0.35); border: 1px solid var(--accent); color: #fff; border-bottom-right-radius: 6px; }
+.bubble.assistant { align-self: flex-start; background: var(--pill); border: 1px solid var(--card-border); border-bottom-left-radius: 6px; }
+.bubble.error { border-color: #ff9a9a; color: #ffd0d0; }
+.bubble.typing { color: var(--text-dim); }
+.bubble .bul { padding-left: 4px; }
+.steps { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.step { font-size: 12.5px; background: rgba(0, 0, 0, 0.22); border-radius: 10px; padding: 6px 10px; color: var(--text-dim); }
+.step .tool { color: var(--peach); font-weight: 700; margin-right: 6px; }
+.step code { font-family: ui-monospace, Consolas, monospace; font-size: 12px; margin-right: 6px; color: #d9d3ff; word-break: break-all; }
+.step .sum { color: #fff; }
+.bubble .h { font-weight: 800; font-size: 16px; margin-top: 6px; color: #fff; }
+.bubble .bul { padding-left: 4px; }
