@@ -142,16 +142,3 @@ tbody tr:hover { background: rgba(255, 255, 255, 0.05); }
   .wx .temp { font-size: 42px; }
   .title-line { font-size: 22px; }
 }
-
-/* ---------- 3D 지도 ---------- */
-.map3d { border-radius: 16px; border: 1px solid var(--card-border); overflow: hidden;
-  background: radial-gradient(ellipse at 50% 40%, rgba(120, 100, 255, 0.25), rgba(10, 8, 40, 0.55)); }
-.lbl3d { color: #fff; font: 700 11px/1.15 "Pretendard", "Noto Sans KR", sans-serif; text-align: center;
-  text-shadow: 0 1px 3px #000, 0 0 6px rgba(0, 0, 0, 0.7); pointer-events: none; white-space: nowrap; }
-.lbl3d span { display: block; font-size: 14px; }
-.lbl3d.on { color: var(--peach); }
-.tip3d { position: absolute; z-index: 5; pointer-events: none; background: rgba(20, 16, 70, 0.92);
-  border: 1px solid var(--card-border); color: #fff; font-size: 13px; padding: 6px 10px; border-radius: 10px;
-  white-space: nowrap; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4); }
-.legend3d { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; margin-top: 10px; font-size: 13px; color: var(--text-dim); }
-.legend3d i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }

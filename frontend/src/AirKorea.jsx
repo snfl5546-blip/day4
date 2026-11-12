@@ -1,9 +1,20 @@
-// 전국 미세먼지 — 에어코리아 실측값(백엔드 /air/korea). 3D 지도는 시도 평균, 표는 측정소별 수치.
-import { useEffect, useMemo, useState } from "react";
-import Korea3D from "./Korea3D";
+// 전국 미세먼지 — 에어코리아 실측값(백엔드 /air/korea). 지도는 시도 평균, 표는 측정소별 수치.
+import { useEffect, useMemo, useRef, useState } from "react";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import { GRADE_COLOR } from "./geo";
 
 const API = import.meta.env.VITE_API_URL ?? "";
+
+// 에어코리아 시도 이름 → 지도 마커 위치(대표 도시). 측정소 좌표 API는 별도 신청이 필요해 시도 단위로 표시한다.
+const SIDO_POS = {
+  서울: [37.68, 127.0], 부산: [35.2, 129.1], 대구: [35.85, 128.6],
+  인천: [37.4, 126.3], 대전: [36.2, 127.45], 울산: [35.6, 129.35],
+  세종: [36.62, 127.1], 경기: [37.3, 127.55], 강원: [37.85, 128.3],
+  충북: [36.85, 127.85], 충남: [36.5, 126.6], 전북: [35.7, 127.1],
+  전남광주: [35.05, 126.75], 경북: [36.4919, 128.8889], 경남: [35.4606, 128.2132],
+  제주: [33.4996, 126.5312],
+};
 
 function Badge({ grade }) {
   if (!grade) return <span>-</span>;
@@ -14,9 +25,27 @@ function Badge({ grade }) {
   );
 }
 
+function sidoIcon(s, selected) {
+  const c = GRADE_COLOR[s.pm10_grade] ?? "#9aa0a6";
+  return L.divIcon({
+    className: "",
+    iconSize: [50, 50],
+    iconAnchor: [25, 25],
+    html: `<div style="width:50px;height:50px;border-radius:50%;background:${c};color:#fff;display:flex;
+      flex-direction:column;align-items:center;justify-content:center;line-height:1.15;
+      border:${selected ? "3px solid #222" : "2px solid #fff"};box-shadow:0 1px 6px rgba(0,0,0,.5);
+      font-family:sans-serif;text-shadow:0 1px 2px rgba(0,0,0,.35)">
+      <span style="font-size:10px">${s.sido}</span><b style="font-size:15px">${s.avg_pm10 ?? "-"}</b></div>`,
+  });
+}
+
 const PAGE = 40;
 
 export default function AirKorea() {
+  const box = useRef(null);
+  const map = useRef(null);
+  const layer = useRef(null);
+
   const [data, setData] = useState(null); // { updated, summary, stations }
   const [error, setError] = useState("");
   const [sido, setSido] = useState("전체");
@@ -54,11 +83,33 @@ export default function AirKorea() {
       .sort((a, b) => (b.pm10 ?? -1) - (a.pm10 ?? -1));
   }, [data, sido, search]);
 
-  // 3D 지도에서 시도를 누르면 표가 그 지역으로 (같은 곳을 다시 누르면 전체로)
-  const pickSido = (name) => {
-    setSido((prev) => (prev === name ? "전체" : name));
-    setShown(PAGE);
-  };
+  // 지도는 한 번만 만든다
+  useEffect(() => {
+    const m = L.map(box.current).setView([36.3, 127.8], 7);
+    map.current = m;
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "© OpenStreetMap",
+      maxZoom: 18,
+    }).addTo(m);
+    layer.current = L.layerGroup().addTo(m);
+    return () => m.remove();
+  }, []);
+
+  // 시도 마커
+  useEffect(() => {
+    layer.current.clearLayers();
+    for (const s of sidoList) {
+      const pos = SIDO_POS[s.sido];
+      if (!pos) continue;
+      L.marker(pos, { icon: sidoIcon(s, s.sido === sido) })
+        .on("click", () => {
+          setSido(s.sido);
+          setShown(PAGE);
+        })
+        .bindTooltip(`${s.sido} · 측정소 ${s.stations}곳 · PM10 ${s.avg_pm10} / PM2.5 ${s.avg_pm25}`)
+        .addTo(layer.current);
+    }
+  }, [sidoList, sido]);
 
   const sum = data?.summary;
   const when = data && new Date(data.updated).toLocaleTimeString("ko-KR");
@@ -80,11 +131,8 @@ export default function AirKorea() {
       )}
 
       <div className="card">
-        <Korea3D sidoList={sidoList} selected={sido} onSelect={pickSido} />
-        <p className="hint">
-          드래그로 돌리고, 휠로 확대·축소합니다. 시도를 누르면 아래 표가 그 지역 측정소로 바뀌고, 다시 누르면 전체로 돌아갑니다.
-          (측정소 좌표 API 미신청으로 시도 단위 표시)
-        </p>
+        <div ref={box} style={{ height: 460 }} />
+        <p className="hint">원은 시도 평균 PM10입니다. 누르면 아래 표가 그 지역 측정소로 바뀝니다. (측정소 좌표 API 미신청으로 시도 단위 표시)</p>
       </div>
 
       <div className="card" style={{ overflowX: "auto" }}>
