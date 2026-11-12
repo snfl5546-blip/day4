@@ -9,7 +9,7 @@ agent.py — 날씨 + 장소 추천 에이전트 (Gemini 함수 호출 / functio
   get_weather(location)                : 지금 날씨 + 오늘 예보 (Open-Meteo, 키 불필요)
   find_spots(location, category, ...)  : 주변 장소 검색 (큐레이션 명소 목록 + OpenStreetMap)
 
-환경변수: GEMINI_API_KEY (필수), GEMINI_MODEL (기본 gemini-3.5-flash, 과부하 시 자동 대체)
+환경변수: GEMINI_API_KEY (필수), GEMINI_MODEL (기본 gemini-3.5-flash, 과부하 시 자동 대체), GEMINI_THINKING_LEVEL (선택: minimal|low|medium|high)
 """
 import math
 import os
@@ -240,13 +240,17 @@ GEMINI_TIMEOUT = 25
 def _gemini(contents: list[dict], api_key: str, models: list[str]) -> dict:
     """models 순서대로 시도한다. 성공한 모델은 models 맨 앞으로 옮겨 이후 호출도 같은 모델을 쓴다."""
     last = "알 수 없는 오류"
+    body = {"systemInstruction": {"parts": [{"text": SYSTEM}]}, "contents": contents,
+            "tools": [{"functionDeclarations": DECLARATIONS}],
+            "toolConfig": {"functionCallingConfig": {"mode": "AUTO"}}}
+    level = os.getenv("GEMINI_THINKING_LEVEL", "").strip().lower()   # minimal | low | medium | high
+    if level:
+        body["generationConfig"] = {"thinkingConfig": {"thinkingLevel": level}}
     for model in list(models):
         try:
             r = httpx.post(GEMINI_URL.format(model=model), timeout=GEMINI_TIMEOUT,
                            headers={"x-goog-api-key": api_key, "Content-Type": "application/json"},
-                           json={"systemInstruction": {"parts": [{"text": SYSTEM}]}, "contents": contents,
-                                 "tools": [{"functionDeclarations": DECLARATIONS}],
-                                 "toolConfig": {"functionCallingConfig": {"mode": "AUTO"}}})
+                           json=body)
         except httpx.TimeoutException:
             last = f"{model} 응답 시간 초과"
             continue

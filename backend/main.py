@@ -24,7 +24,7 @@ load_dotenv()
 
 from typing import Literal
 
-from fastapi import FastAPI, Header, HTTPException, Query
+from fastapi import FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -135,11 +135,34 @@ class ChatIn(BaseModel):
     history: list[ChatTurn] = Field(default_factory=list, max_length=12)
 
 
+# IP 별 호출 제한 (공개 서버에서 Gemini 사용량을 보호한다). 메모리 방식이라 인스턴스 1개 기준.
+AGENT_LIMIT = int(os.getenv("AGENT_RATE_PER_HOUR", "20"))
+_hits: dict[str, list[float]] = {}
+
+
+def _rate_ok(ip: str) -> bool:
+    now = time.time()
+    recent = [t for t in _hits.get(ip, []) if now - t < 3600]
+    if len(recent) >= AGENT_LIMIT:
+        _hits[ip] = recent
+        return False
+    recent.append(now)
+    _hits[ip] = recent
+    if len(_hits) > 5000:                                   # 메모리 폭주 방지
+        for k in [k for k, v in _hits.items() if not v or now - v[-1] > 3600]:
+            del _hits[k]
+    return True
+
+
 @app.post("/agent/chat")
-def agent_chat(body: ChatIn):
+def agent_chat(body: ChatIn, request: Request):
     """질문 → Gemini 가 도구(get_weather / find_spots)를 골라 호출 → 추천 답변. 어떤 도구를 불렀는지도 함께 돌려준다."""
     if not os.getenv("GEMINI_API_KEY", "").strip():
         raise HTTPException(503, "GEMINI_API_KEY 가 설정되지 않았습니다 (backend/.env 에 추가하세요)")
+    fwd = request.headers.get("x-forwarded-for", "").split(",")[0].strip()   # Railway 프록시 뒤의 실제 IP
+    ip = fwd or (request.client.host if request.client else "?")
+    if not _rate_ok(ip):
+        raise HTTPException(429, f"요청이 너무 많습니다. 1시간에 {AGENT_LIMIT}번까지 질문할 수 있어요.")
     try:
         return agent.run_agent(body.message, [t.model_dump() for t in body.history])
     except Exception as e:

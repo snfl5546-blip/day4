@@ -4,3 +4,4 @@ httpx
 pandas
 numpy
 supabase
+python-dotenv
