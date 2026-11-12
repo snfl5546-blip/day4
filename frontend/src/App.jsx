@@ -3,6 +3,7 @@ import KoreaWeather from "./KoreaWeather";
 import Weather from "./Weather";
 import AirKorea from "./AirKorea";
 import Agent from "./Agent";
+import DataShape from "./DataShape";
 
 const PAGES = [
   {
@@ -32,6 +33,13 @@ const PAGES = [
     title: "날씨 기반 장소 추천 에이전트",
     desc: "Gemini가 질문을 보고 날씨 조회와 장소 검색 도구 중 필요한 것을 골라 호출해 추천해 드려요.",
     Component: Agent,
+  },
+  {
+    id: "data",
+    label: "🧬 데이터 구조",
+    title: "dummyjson 상품 데이터 구조",
+    desc: "dummyjson.com/products 응답이 어떤 층과 타입으로 이루어졌는지 한 줄씩 펼쳐 보여 드려요.",
+    Component: DataShape,
   },
 ];
 

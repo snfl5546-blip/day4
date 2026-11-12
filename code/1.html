@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>products 출력</title>
+  <style>
+    body { font-family: "Malgun Gothic", system-ui, sans-serif; margin: 24px; background: #f6f5fb; color: #222; }
+    h1 { font-size: 20px; }
+    table { border-collapse: collapse; width: 100%; background: #fff; }
+    th, td { border: 1px solid #ddd; padding: 6px 10px; text-align: left; font-size: 14px; }
+    th { background: #5b4bd6; color: #fff; position: sticky; top: 0; }
+    img { width: 48px; height: 48px; object-fit: contain; }
+  </style>
+</head>
+<body>
+  <h1>상품 목록 <small id="count"></small></h1>
+  <table>
+    <thead>
+      <tr><th>ID</th><th>사진</th><th>이름</th><th>카테고리</th><th>브랜드</th><th>가격($)</th><th>평점</th><th>재고</th></tr>
+    </thead>
+    <tbody id="list"></tbody>
+  </table>
+
+  <!-- 외부 파일: 이 안에 변수 products 가 들어 있다 -->
+  <script src="products.js"></script>
+  <script>
+    // products.js 의 변수 products 를 읽어 화면에 출력한다
+    const tbody = document.getElementById("list");
+    document.getElementById("count").textContent = `(총 ${products.total}개)`;
+
+    for (const p of products.products) {
+      const tr = document.createElement("tr");
+      const cells = [p.id, null, p.title, p.category, p.brand ?? "-", p.price, p.rating, p.stock];
+      cells.forEach((value, i) => {
+        const td = document.createElement("td");
+        if (i === 1) {
+          const img = document.createElement("img");
+          img.src = p.thumbnail;
+          img.alt = p.title;
+          td.appendChild(img);
+        } else {
+          td.textContent = value;       // textContent 로 넣어 HTML 이 해석되지 않게 한다
+        }
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    }
+  </script>
+</body>
+</html>

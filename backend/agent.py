@@ -127,6 +127,41 @@ def _km(lat1, lon1, lat2, lon2) -> float:
 _osm_down_until = 0.0          # 공개 서버가 막혔을 때 한동안 다시 두드리지 않는다 (회로 차단)
 
 
+# 카카오 로컬 검색 (KAKAO_REST_KEY 가 있고 서비스가 켜져 있을 때만 쓴다. 실패하면 조용히 건너뛴다)
+KAKAO_CATEGORY = {"attraction": "AT4", "cafe": "CE7", "restaurant": "FD6", "museum": "CT1"}   # 카테고리 코드
+KAKAO_KEYWORD = {"park": "공원", "beach": "해수욕장", "mountain": "등산", "shopping": "쇼핑몰"}      # 키워드 검색
+_kakao_down_until = 0.0
+
+
+def _kakao_spots(place: dict, category: str) -> list[dict] | None:
+    global _kakao_down_until
+    key = os.getenv("KAKAO_REST_KEY", "").strip()
+    if not key or time.time() < _kakao_down_until:
+        return None
+    params = {"x": place["lon"], "y": place["lat"], "radius": 20000, "sort": "distance", "size": 15}
+    if category in KAKAO_CATEGORY:
+        url, params["category_group_code"] = "https://dapi.kakao.com/v2/local/search/category.json", KAKAO_CATEGORY[category]
+    else:
+        url, params["query"] = "https://dapi.kakao.com/v2/local/search/keyword.json", KAKAO_KEYWORD[category]
+    try:
+        r = httpx.get(url, params=params, headers={"Authorization": f"KakaoAK {key}"}, timeout=6)
+    except httpx.HTTPError:
+        _kakao_down_until = time.time() + 120
+        return None
+    if r.status_code != 200:                       # 키 오류·서비스 미활성(403)·한도 초과 → 잠시 건너뜀
+        _kakao_down_until = time.time() + 300
+        return None
+    out = []
+    for d in r.json().get("documents", []):
+        try:
+            km = round(int(d.get("distance") or 0) / 1000, 1)
+        except ValueError:
+            km = 0.0
+        out.append({"name": d["place_name"], "region": (d.get("address_name") or "")[:20], "indoor": category in ("museum", "cafe", "shopping"),
+                    "distance_km": km, "description": d.get("category_name", "").split(" > ")[-1], "source": "카카오"})
+    return out
+
+
 def _osm_spots(place: dict, category: str) -> list[dict] | None:
     """OpenStreetMap(Overpass)에서 주변 장소 검색. 실패하면 None."""
     global _osm_down_until
@@ -178,14 +213,20 @@ def find_spots(location: str, category: str = "attraction", limit: int = 8) -> d
                           "description": desc, "source": "큐레이션"})
     curated_n = len(found)
 
-    osm = _osm_spots(place, category)
+    kakao = _kakao_spots(place, category)
+    if kakao:
+        have = {s["name"] for s in found}
+        found += [s for s in kakao if s["name"] not in have]
+    osm = _osm_spots(place, category) if not kakao else None
     if osm:
         have = {s["name"] for s in found}
         found += [s for s in osm if s["name"] not in have]
     found.sort(key=lambda s: s["distance_km"])
 
     note = ""
-    if osm is None and category in CATEGORIES and category in ("cafe",):
+    if kakao:
+        note = ""
+    elif osm is None and category in CATEGORIES and category in ("cafe",):
         note = "실시간 장소 검색 서버에 연결하지 못해 카페 정보를 가져오지 못했습니다."
     elif osm is None:
         note = "주요 명소 목록 기준입니다(실시간 지도 검색은 일시적으로 사용 불가)."

@@ -160,3 +160,20 @@ tbody tr:hover { background: rgba(255, 255, 255, 0.05); }
 .step .sum { color: #fff; }
 .bubble .h { font-weight: 800; font-size: 16px; margin-top: 6px; color: #fff; }
 .bubble .bul { padding-left: 4px; }
+
+/* ---------- 데이터 구조 애니메이션 ---------- */
+.tree { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 13px; }
+.node { display: flex; align-items: baseline; gap: 8px; padding: 3px 8px; border-left: 2px solid rgba(182, 156, 255, 0.25);
+  border-radius: 6px; opacity: 0; transform: translateX(-14px); transition: opacity .35s ease, transform .35s ease, background .15s; }
+.node.on { opacity: 1; transform: none; }
+.node.fold { cursor: pointer; }
+.node.fold:hover { background: rgba(255, 255, 255, 0.08); }
+.node .caret { width: 12px; color: var(--accent); }
+.node .k { color: var(--peach); font-weight: 700; }
+.node.more .k { color: var(--text-dim); font-style: italic; font-weight: 400; }
+.node .v { color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.badge { font-size: 11px; padding: 0 7px; border-radius: 999px; border: 1px solid currentColor; }
+.t-object { color: #b69cff; } .t-array { color: #7fd6ff; } .t-string { color: #8ff0b0; }
+.t-number { color: #ffb36b; } .t-boolean { color: #ff8fb3; } .t-null { color: #aaa; }
+.node.object, .node.array { background: rgba(182, 156, 255, 0.06); }
+@media (prefers-reduced-motion: reduce) { .node { transition: none; transform: none; } }
