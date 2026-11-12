@@ -1,0 +1,144 @@
+:root {
+  --bg1: #27256f;
+  --bg2: #120e3f;
+  --text: #e9e6ff;
+  --text-dim: #b9b2f0;
+  --accent: #b69cff;
+  --card: rgba(255, 255, 255, 0.07);
+  --card-border: rgba(255, 255, 255, 0.16);
+  --pill: rgba(255, 255, 255, 0.1);
+  --peach: #ffd9a8;
+  font: 16px/1.6 "Pretendard", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+  color: var(--text);
+  color-scheme: dark;
+  -webkit-font-smoothing: antialiased;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100svh;
+  background: linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 100%) fixed;
+}
+
+#root { min-height: 100svh; }
+
+/* ---------- 앱 틀 ---------- */
+.shell {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 20px 16px 48px;
+  text-align: left;
+}
+
+.topbar { display: flex; align-items: center; gap: 12px; }
+.topbar h1 { margin: 0; font-size: 19px; font-weight: 700; color: #fff; }
+.back {
+  width: 32px; height: 32px; border-radius: 50%; border: 0; cursor: pointer;
+  background: var(--pill); color: #fff; font-size: 18px; line-height: 1;
+}
+
+.tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 10px; }
+.tab {
+  border: 1px solid var(--card-border); background: var(--pill); color: var(--text);
+  padding: 6px 16px; border-radius: 999px; font-size: 14px; cursor: pointer;
+}
+.tab:hover { background: rgba(255, 255, 255, 0.18); }
+.tab.active { background: rgba(182, 156, 255, 0.28); border-color: var(--accent); color: #fff; font-weight: 700; }
+
+.lead { margin: 0 0 18px; color: var(--text-dim); font-size: 15px; }
+
+.footnote {
+  margin-top: 22px; text-align: center; color: #8f89c9; font-size: 13px;
+}
+
+/* ---------- 카드 ---------- */
+.card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.badge-tag {
+  display: inline-block; background: var(--peach); color: #3b2a14;
+  font-size: 12px; font-weight: 700; padding: 3px 12px; border-radius: 999px;
+}
+.title-line { margin: 10px 0 14px; font-size: 26px; font-weight: 800; color: #fff; }
+.title-line::after {
+  content: ""; display: block; width: 44px; height: 3px; margin-top: 10px;
+  background: var(--accent); border-radius: 2px;
+}
+
+/* ---------- 폼 ---------- */
+input, select {
+  width: 100%; padding: 11px 14px; font-size: 15px; color: #fff;
+  background: rgba(255, 255, 255, 0.09); border: 1px solid var(--card-border);
+  border-radius: 12px; outline: none; font-family: inherit;
+}
+input::placeholder { color: #9d97d6; }
+input:focus, select:focus { border-color: var(--accent); }
+select option { color: #111; }
+
+button {
+  font-family: inherit; color: #fff; cursor: pointer; font-size: 14px;
+  background: rgba(182, 156, 255, 0.25); border: 1px solid var(--accent);
+  border-radius: 999px; padding: 6px 16px;
+}
+button:hover:not(:disabled) { background: rgba(182, 156, 255, 0.45); }
+button:disabled { opacity: 0.55; cursor: default; }
+
+.row { display: flex; gap: 8px; margin-bottom: 14px; }
+.row select { flex: 1; }
+
+/* 자동완성 목록 */
+.suggest {
+  position: absolute; z-index: 2000; left: 0; right: 0; margin: 6px 0 0; padding: 4px;
+  list-style: none; background: #231f66; border: 1px solid var(--card-border);
+  border-radius: 14px; max-height: 280px; overflow-y: auto;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+}
+.suggest li { padding: 9px 12px; border-radius: 10px; }
+.suggest li.item { cursor: pointer; }
+.suggest li.item:hover { background: rgba(182, 156, 255, 0.25); }
+.suggest li.note { color: #9d97d6; font-size: 13px; }
+.suggest li.err { color: #ff9a9a; }
+.suggest small { color: var(--text-dim); }
+
+/* ---------- 날씨 표시 ---------- */
+.wx {
+  border-radius: 20px; padding: 20px; color: #fff;
+  background: linear-gradient(135deg, #5a45d8 0%, #9b6bff 60%, #c58bff 100%);
+  box-shadow: 0 10px 30px rgba(60, 30, 160, 0.45);
+}
+.wx .place { font-size: 17px; font-weight: 700; }
+.wx .place small { font-weight: 400; opacity: 0.85; margin-left: 6px; }
+.wx .main { display: flex; align-items: center; gap: 14px; margin: 6px 0; }
+.wx .emoji { font-size: 56px; line-height: 1; }
+.wx .temp { font-size: 52px; font-weight: 800; line-height: 1.1; }
+.wx .desc { font-size: 17px; opacity: 0.95; }
+.wx .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin-top: 12px; }
+.wx .stat { background: rgba(255, 255, 255, 0.16); border-radius: 12px; padding: 8px 12px; font-size: 14px; }
+.wx .stat b { display: block; font-size: 16px; }
+
+.wx .grade { display: inline-block; font-size: 12px; font-weight: 700; padding: 1px 9px; border-radius: 999px; color: #fff; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35); }
+.wx .src { margin: 10px 0 0; font-size: 12px; opacity: 0.85; }
+
+.hint { color: var(--text-dim); font-size: 14px; margin: 10px 2px 0; }
+.err-text { color: #ff9a9a; }
+.updated { color: #8f89c9; font-size: 12px; margin: 10px 2px 0; }
+
+/* ---------- 지도 ---------- */
+.leaflet-container { border-radius: 16px; border: 1px solid var(--card-border); font-family: inherit; }
+
+/* ---------- 표 (미세먼지) ---------- */
+table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; }
+th, td { padding: 9px 10px; text-align: left; border-bottom: 1px solid var(--card-border); }
+th { color: var(--text-dim); font-weight: 600; }
+tbody tr:hover { background: rgba(255, 255, 255, 0.05); }
+
+@media (max-width: 560px) {
+  .wx .temp { font-size: 42px; }
+  .title-line { font-size: 22px; }
+}

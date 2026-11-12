@@ -1,0 +1,10 @@
+# 압축본·로그·환경변수는 올리지 않는다
+*.zip
+*.log
+.env
+.env.*
+!.env.example
+node_modules/
+dist/
+.venv/
+__pycache__/
